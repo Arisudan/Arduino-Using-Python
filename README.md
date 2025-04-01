@@ -72,6 +72,6 @@ This project is open-source and available under the **MIT License**.
 Feel free to fork this repository, create pull requests, or report issues. Contributions are welcome!
 
 ---
-### Author: [Your Name]
-GitHub: [Your Profile Link]
+### Author: [ARISUDAN TH]
+GitHub: [https://github.com/Arisudan]
 
