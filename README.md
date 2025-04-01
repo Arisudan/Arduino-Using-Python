@@ -28,8 +28,8 @@ pip install pyfirmata
 ## Running the Blinking LED Code
 1. Clone this repository:
    ```sh
-   git clone https://github.com/your-username/your-repo-name.git
-   cd your-repo-name
+   git clone git clone https://github.com/Arisudan/Arduino-Using-Python.git
+   cd Arduino-Using-Python
    ```
 2. Run the Python script:
    ```sh
