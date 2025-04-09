@@ -1,175 +1,282 @@
-# Arduino Blinking LED using Python with pyFirmata
+# Stack Buffer Overflow in a Linux Kernel Module
 
-## Overview
-This project demonstrates how to control an Arduino board using Python with the `pyFirmata` library. The example showcases the basic blinking LED program, where an LED connected to an Arduino board blinks at a specified interval.
+## Project Goal
 
-## Prerequisites
-Before running this project, ensure you have the following:
-- **Arduino Board** (e.g., Arduino Uno, Mega, or compatible board)
-- **LED** (if using an external LED) or built-in LED on Pin 13
-- **USB Cable** to connect the Arduino to the computer
-- **Computer with Python installed**
-- **Arduino IDE** to upload the Firmata firmware
-- **pyFirmata library** installed in Python
-
-## Installation & Setup
-### Step 1: Upload StandardFirmata to Arduino
-1. Open the **Arduino IDE**.
-2. Go to **File → Examples → Firmata → StandardFirmata**.
-3. Select your **board type** and the **correct COM port**.
-4. Upload the `StandardFirmata` sketch to the Arduino.
-
-### Step 2: Install pyFirmata
-To communicate with Arduino using Python, install the `pyFirmata` library:
-```sh
-pip install pyfirmata
-```
-
-## Running the Blinking LED Code
-1. Clone this repository:
-   ```sh
-   git clone git clone https://github.com/Arisudan/Arduino-Using-Python.git
-   cd Arduino-Using-Python
-   ```
-2. Run the Python script:
-   ```sh
-   python blink.py
-   ```
-
-## Code Explanation
-The `blink.py` script contains:
-```python
-import pyfirmata
-import time
-
-board = pyfirmata.Arduino('COM3')  # Change 'COM3' to your Arduino's port
-led_pin = board.get_pin('d:13:o')  # Pin 13 as an output
-
-while True:
-    led_pin.write(1)  # Turn LED on
-    time.sleep(1)      # Wait 1 second
-    led_pin.write(0)  # Turn LED off
-    time.sleep(1)      # Wait 1 second
-```
-### Explanation:
-- `pyfirmata.Arduino('COM3')`: Connects to the Arduino board on the specified port.
-- `board.get_pin('d:13:o')`: Selects **digital pin 13** as an **output**.
-- Inside an infinite loop, the LED is turned **on**, waits **1 second**, turned **off**, and repeats.
-
-## Customization
-- Change `led_pin = board.get_pin('d:13:o')` to use a different digital pin.
-- Modify the `time.sleep(1)` values to change the blink speed.
-
-## Troubleshooting
-- If the Arduino is not detected, check the COM port and replace `'COM3'` with the correct port (`/dev/ttyUSB0` on Linux/Mac).
-- Ensure `StandardFirmata` is uploaded to the Arduino.
-- Verify that `pyfirmata` is correctly installed using `pip list`.
-
-## License
-This project is open-source and available under the **MIT License**.
-
-## Contributing
-Feel free to fork this repository, create pull requests, or report issues. Contributions are welcome!
+The objective of this project is to create a vulnerable Linux kernel module that demonstrates a stack buffer overflow. It also walks through the process of identifying and fixing the vulnerability. This project uses user-space input to simulate the overflow scenario and includes best practices to avoid common setup issues.
 
 ---
-# **Servo Motor Control with Arduino and Python (pyFirmata)**
 
-## **Overview**
-This project demonstrates how to interface and control a **Servo Motor** using an **Arduino** board and Python with the `pyFirmata` library. The script moves the servo motor between **0°, 90°, and 180°** in an infinite loop.
+## Tools Required
 
-## **Hardware Requirements**
-- **Arduino Board** (Uno, Mega, Nano, etc.)
-- **Servo Motor** (e.g., SG90, MG995)
-- **External Power Supply** (for high-torque servos)
-- **Jumper Wires** for connections
+- Linux system (Ubuntu recommended)
+- Terminal with `sudo` privileges
+- Required packages: `build-essential`, `linux-headers`
 
-## **Software Requirements**
-- **Arduino IDE** (for uploading the Firmata sketch)
-- **Python 3.x** (with `pyFirmata` installed)
-- **pyFirmata Library** (to communicate with Arduino)
+---
 
-## **Step-by-Step Instructions**
+## Setup and Execution
 
-### **Step 1: Install Required Libraries**
-Before running the Python script, install `pyFirmata` using:
+### Step 1: Install Required Packages
+
 ```bash
-pip install pyfirmata
+sudo apt update
 ```
 
-### **Step 2: Upload Firmata to Arduino**
-1. Open **Arduino IDE**.
-2. Go to **File** → **Examples** → **Firmata** → **StandardFirmata**.
-3. Select the correct **Board** and **Port**.
-4. Click **Upload** to flash the Firmata firmware.
-
-### **Step 3: Connect the Servo Motor**
-Connect the **Servo Motor** to the Arduino as follows:
-
-| **Servo Motor** | **Arduino** |
-|----------------|------------|
-| VCC (Red)      | 5V         |
-| GND (Black/Brown) | GND    |
-| Signal (Yellow/White) | Digital Pin 9 |
-
-### **Step 4: Python Code to Control Servo Motor**
-Save the following Python script as `servo_motor.py`:
-
-```python
-import pyfirmata
-import time
-
-# Define the COM port where Arduino is connected
-board = pyfirmata.Arduino('COM5')  # Change COM port as per your system
-
-# Define the servo motor pin
-servo = board.get_pin('d:9:s')  # Digital pin 9
-
-time.sleep(2)  # Allow time for Arduino to initialize
-
-try:
-    while True:
-        print("Moving to 0°")
-        servo.write(0)   
-        time.sleep(1)
-
-        print("Moving to 90°")
-        servo.write(90)  
-        time.sleep(1)
-
-        print("Moving to 180°")
-        servo.write(180) 
-        time.sleep(1)
-
-except KeyboardInterrupt:
-    print("Stopping servo...")
-    board.exit()
-```
-
-### **Step 5: Run the Python Script**
-After wiring and uploading Firmata, run the script using:
 ```bash
-python servo_motor.py
+sudo apt install build-essential linux-headers-$(uname -r)
 ```
 
-### **Expected Output**
-- The **servo motor** moves to **0°**, waits for **1 second**, then moves to **90°**, then **180°**, and repeats.
-- The process continues **until manually stopped** using **Ctrl + C**.
+---
 
-## **Troubleshooting**
-- **Error: SerialException ("WriteFile failed")**
-  - Ensure **no other program** (e.g., Serial Monitor) is using the Arduino's COM port.
-  - Try **restarting the computer** and re-uploading the **Firmata** sketch.
-- **Servo motor not moving**
-  - Check **wiring** and ensure **Firmata** is uploaded correctly.
-  - Increase the **delay** (`time.sleep()`) in the script if needed.
-  - If using a **high-torque servo**, use an **external power source**.
+### Step 2: Create Project Directory
+
+```bash
+mkdir -p ~/stack-overflow-lab/vuln_module
+```
+
+```bash
+cd ~/stack-overflow-lab/vuln_module
+```
 
 ---
 
-## **Conclusion**
-This project provides a simple way to **interface and control a servo motor** with **Arduino using Python** and `pyFirmata`. The **Firmata protocol** allows Python to control hardware without writing custom Arduino sketches.
+### Step 3: Create Kernel Module Source File
+
+```bash
+nano stack_overflow.c
+```
+
+Paste the following code:
+
+```c
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/uaccess.h>
+
+#define DEVICE_NAME "vuln"
+#define BUF_LEN 32
+
+static int major;
+static char kernel_buffer[BUF_LEN];
+
+ssize_t device_write(struct file *file, const char __user *buf, size_t len, loff_t *offset) {
+    printk(KERN_INFO "[vuln] Writing %zu bytes (max: %d) to kernel buffer.\n", len, BUF_LEN);
+    copy_from_user(kernel_buffer, buf, len);  // Vulnerability: no bounds checking
+    return len;
+}
+
+static struct file_operations fops = {
+    .write = device_write,
+};
+
+static int __init vuln_init(void) {
+    major = register_chrdev(0, DEVICE_NAME, &fops);
+    printk(KERN_INFO "[vuln] Module loaded. Major number: %d\n", major);
+    return 0;
+}
+
+static void __exit vuln_exit(void) {
+    unregister_chrdev(major, DEVICE_NAME);
+    printk(KERN_INFO "[vuln] Module unloaded.\n");
+}
+
+module_init(vuln_init);
+module_exit(vuln_exit);
+MODULE_LICENSE("GPL");
+```
 
 ---
-### Author: [ARISUDAN TH]
-GitHub: [https://github.com/Arisudan]
 
+### Step 4: Create Makefile
+
+```bash
+nano Makefile
+```
+
+Paste the following content:
+
+```make
+obj-m += stack_overflow.o
+
+all:
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+
+clean:
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+```
+
+---
+
+### Step 5: Compile the Kernel Module
+
+```bash
+make
+```
+
+---
+
+### Step 6: Load the Kernel Module
+
+```bash
+sudo insmod stack_overflow.ko
+```
+
+Verify module is loaded:
+
+```bash
+sudo dmesg | grep vuln
+```
+
+Example output:
+
+```
+[vuln] Module loaded. Major number: 236
+```
+
+---
+
+### Step 7: Create the Character Device Node
+
+Remove any existing device:
+
+```bash
+sudo rm -f /dev/vuln
+```
+
+Create the device using the correct major number:
+
+```bash
+sudo mknod /dev/vuln c 236 0
+```
+
+Set appropriate permissions:
+
+```bash
+sudo chmod 666 /dev/vuln
+```
+
+Verify the device:
+
+```bash
+ls -l /dev/vuln
+```
+
+Expected output:
+
+```
+crw-rw-rw- 1 root root 236, 0 ... /dev/vuln
+```
+
+---
+
+### Step 8: Trigger the Buffer Overflow
+
+Send a long string to the device:
+
+```bash
+echo "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" | sudo tee /dev/vuln
+```
+
+Check kernel logs:
+
+```bash
+sudo dmesg | grep vuln
+```
+
+Example output:
+
+```
+[vuln] Writing 58 bytes (max: 32) to kernel buffer.
+```
+
+---
+
+### Step 9: Fix the Vulnerability
+
+Open the source code:
+
+```bash
+nano stack_overflow.c
+```
+
+Replace the vulnerable line:
+
+```c
+copy_from_user(kernel_buffer, buf, len);
+```
+
+With a safer version:
+
+```c
+size_t safe_len = len > BUF_LEN ? BUF_LEN : len;
+copy_from_user(kernel_buffer, buf, safe_len);
+```
+
+---
+
+### Step 10: Rebuild and Reload the Module
+
+```bash
+make clean
+```
+
+```bash
+make
+```
+
+```bash
+sudo rmmod stack_overflow
+```
+
+```bash
+sudo insmod stack_overflow.ko
+```
+
+---
+
+### Step 11: Test After Fix
+
+Send the long input again:
+
+```bash
+echo "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" | sudo tee /dev/vuln
+```
+
+Check logs:
+
+```bash
+sudo dmesg | grep vuln
+```
+
+Output will show safe handling of the input without overflow.
+
+---
+
+## Troubleshooting and Best Practices
+
+| Issue | Solution |
+|-------|----------|
+| Created `/dev/vuln` as a regular file | Use `mknod` with correct major number |
+| No output from `dmesg` | Use `sudo dmesg | grep vuln` |
+| No effect when writing to `/dev/vuln` | Ensure module is loaded and device node exists |
+| Changes to code have no effect | Run `make clean && make` before reloading |
+
+---
+
+## Conclusion
+
+This project demonstrated:
+
+- How to write and compile a Linux kernel module
+- How to simulate a stack buffer overflow
+- How to safely handle user-space input to prevent kernel-space vulnerabilities
+- Proper methods for creating character devices and debugging with `dmesg`
+
+---
+
+## Project Files
+
+All project files can be downloaded or cloned from the following repository:
+
+**GitHub**: [https://github.com/Arisudan](https://github.com/Arisudan)
